@@ -30,55 +30,65 @@ const employeeController = {
         } catch (error) {
             console.log("Employee Create Error from catch");
             console.log("Error occured--" + error);
-            message = "Employee Create Error from catch";
+            message = "Employee Create Error from catch!";
         } finally {
             session.endSession();
         }
-
         res.send(message);
     },
 
-    createFromXlxs: function(req, res) {
-        let results = [];
-        const workBook = xlsx.readFile("./employees.xlsx", { dateNF: "dd/mm/yy" });
+    createFromXlxs: async function(req, res) {
+        let message;
+        let session;
+        let allEmployees = [];
 
-        for (
-            let sheetNumber = 0; sheetNumber < workBook.SheetNames.length; sheetNumber++
-        ) {
-            const workSheet = workBook.Sheets[workBook.SheetNames[sheetNumber]];
-            let employees = xlsx.utils.sheet_to_json(workSheet, { raw: false });
+        try {
+            const workBook = xlsx.readFile("./employees.xlsx", { dateNF: "dd/mm/yy" });
 
-            employees = employees.map((employee) => {
-                if (typeof employee.id == "string") employee.id = Number(employee.id);
-                if (typeof employee.mobile == "string")
-                    employee.mobile = Number(employee.mobile);
-                return employee;
+            for (
+                let sheetNumber = 0; sheetNumber < workBook.SheetNames.length; sheetNumber++
+            ) {
+                const workSheet = workBook.Sheets[workBook.SheetNames[sheetNumber]];
+                let employees = xlsx.utils.sheet_to_json(workSheet, { raw: false });
+
+                employees = employees.map((employee) => {
+                    if (typeof employee.id == "string") employee.id = Number(employee.id);
+                    if (typeof employee.mobile == "string")
+                        employee.mobile = Number(employee.mobile);
+                    return employee;
+                });
+
+                //this.appendFiles(employees);
+                allEmployees = allEmployees.concat(employees);
+            }
+            console.log("for loop completed");
+
+            session = await mongoose.startSession();
+            await session.withTransaction(async() => {
+                message = await Employee.collection.insertMany(allEmployees, { session: session });
             });
-
-            fs.appendFile(
-                "./employees.json",
-                JSON.stringify(employees, null, 2),
-                (err) => {
-                    if (err) console.log(err);
-                    else {
-                        console.log("employee appended successfully\n");
-                    }
-                }
-            );
-            Employee.collection.insertMany(employees, function(err, result) {
-                if (err) {
-                    console.log("Employee createFromXlsx Error");
-                    return console.error(err);
-                } else {
-                    results.push(result);
-                    console.log("Multiple documents inserted to Collection");
-                }
-            });
-            //if (sheetNumber == workBook.SheetNames.length - 1) res.send(results);
+        } catch (error) {
+            console.log("Error faced--" + error);
+            message = "Error faced while inserting many employees from xlxs file!";
+        } finally {
+            await session.endSession();
         }
-        console.log("for loop completed");
-        res.send(results);
+        res.send(message);
     },
+
+    appendFiles: function(employees) {
+        fs.appendFile(
+            "./employees.json",
+            JSON.stringify(employees, null, 2),
+            (err) => {
+                if (err) console.log(err);
+                else {
+                    console.log("employee appended successfully\n");
+                }
+            }
+        );
+    },
+
     getById: async function(req, res) {
         let message;
         let session;
@@ -101,12 +111,13 @@ const employeeController = {
             });
         } catch (error) {
             console.log("Error faced--" + error);
-            message = "Error faced while getting Employee"
+            message = "Error faced while getting Employee by id!";
         } finally {
-            await session.endSession()
+            await session.endSession();
         }
         res.send(message);
     },
+
     getAll: async function(req, res) {
         let message;
         let allEmployees = [];
@@ -134,23 +145,26 @@ const employeeController = {
             });
         } catch (error) {
             console.log("Error faced--" + error);
-            message = "Error faced while getting all employees"
+            message = "Error faced while getting all employees!";
         } finally {
             await session.endSession()
         }
         res.send(message);
     },
-    updateById: function(req, res) {
-        Employee.updateOne({ id: req.params.id }, { $set: req.body })
-            .then(function(employee) {
-                console.log("Employee updated");
-                res.send(employee);
-            })
-            .catch((err) => {
-                console.log("Employee updateById Error");
-                console.log(err);
-            });
+
+    updateById: async function(req, res) {
+        let message;
+
+        try {
+            message = await Employee.updateOne({ id: req.params.id }, { $set: req.body });
+        } catch (error) {
+            console.log("Error faced--" + error);
+            message = "Error faced while updating employee by id!";
+        }
+
+        res.send(message);
     },
+
     deleteById: async function(req, res) {
         let message;
         let session;
@@ -165,12 +179,13 @@ const employeeController = {
             });
         } catch (error) {
             console.log("Error faced--" + error);
-            message = "Error faced while deleting employee"
+            message = "Error faced while deleting employee by id!";
         } finally {
-            await session.endSession()
+            await session.endSession();
         }
         res.send(message);
     },
+
     deleteAll: async function(req, res) {
         let message;
         let session;
@@ -185,9 +200,9 @@ const employeeController = {
 
         } catch (error) {
             console.log("Error faced--" + error);
-            message = "Error faced while deleting all employees"
+            message = "Error faced while deleting all employees!"
         } finally {
-            await session.endSession()
+            await session.endSession();
         }
         res.send(message);
     }

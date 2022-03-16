@@ -4,9 +4,9 @@ const mongoose = require("mongoose");
 
 const dbConfig = require("./config/database.config.js");
 const employeeRoutes = require("./routes/employee.routes.js");
+const addressRoutes = require("./routes/address.routes.js");
 
 const app = express();
-let session
 
 app.listen(3001, function() {
     console.log("listening on 3001");
@@ -30,7 +30,13 @@ app.get("/getMessage", (req, res) => {
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+app.use("/", function(req, res, next) {
+    console.log("all middleware---------------");
+    next();
+})
 app.use("/employee", employeeRoutes);
+app.use("/address", addressRoutes);
 app.get("/", (req, res) => {
     res.send("Empty get request received");
 });
