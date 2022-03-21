@@ -6,8 +6,6 @@ async function beginSession(req, res, next) {
 
         session.startTransaction();
         req.addedSession = session;
-        req.testKey = "testkey";
-        console.log("session" + req.addedSession);
         next();
     } catch (error) {
         console.log("Error faced from transaction: " + error);

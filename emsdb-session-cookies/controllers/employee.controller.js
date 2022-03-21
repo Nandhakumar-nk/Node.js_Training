@@ -26,7 +26,6 @@ const employeeController = {
             req.employeeObjectId = employee._id;
             await addressController.create(req, res);
             await next();
-            authcontroller.startSession();
             result = "Employee was created successfully, your session was started!";
         } catch (error) {
             console.log("Employee Create Error from catch");
@@ -85,9 +84,6 @@ const employeeController = {
     },
 
     login: async function(req, res, next) {
-        console.log("email" + req.body.email_id);
-        console.log("password" + req.body.password);
-
         let result;
 
         try {
@@ -95,14 +91,15 @@ const employeeController = {
 
             if (employee) {
                 if (await bcrypt.compare(req.body.password, employee.password)) {
-                    authcontroller.startSession();
+                    const token = authcontroller.generateToken();
 
-                    result = "Login successfull, your session was started!";
+                    req.session.jwt_token = token;
+                    result = "You are successfully logged in!";
                 } else {
-                    result = "Employee Password is invalid!";
+                    result = "Employee Password is invalid";
                 }
             } else {
-                result = "Employee emailId is invalid!";
+                result = "Employee emailId is invalid";
             }
             await next();
         } catch (error) {

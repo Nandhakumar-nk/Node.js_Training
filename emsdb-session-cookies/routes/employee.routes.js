@@ -6,7 +6,7 @@ const mongoTranscation = require("../db-connection/mongo-transaction.js");
 
 const router = express.Router();
 
-router.use(authcontroller.verifySession);
+router.use(authcontroller.verifyToken);
 
 router.use(mongoTranscation.beginSession);
 

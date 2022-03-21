@@ -1,11 +1,13 @@
 const bodyParser = require("body-parser");
-var cookieParser = require('cookie-parser')
+const cookieParser = require("cookie-parser");
 const express = require("express");
 const mongoose = require("mongoose");
+const MongoStore = require("connect-mongo");
+const session = require("express-session");
 
+const addressRoutes = require("./routes/address.routes.js");
 const dbConfig = require("./config/database.config.js");
 const employeeRoutes = require("./routes/employee.routes.js");
-const addressRoutes = require("./routes/address.routes.js");
 
 const app = express();
 
@@ -32,6 +34,15 @@ app.get("/getMessage", (req, res) => {
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
+app.use(session({
+    secret: 'keyboard cat',
+    saveUninitialized: true, // don't create session until something stored
+    resave: false, //don't save session if unmodified
+    store: MongoStore.create({
+        mongoUrl: dbConfig.url,
+        collectionName: 'sessions'
+    })
+}));
 app.use("/employee", employeeRoutes);
 app.use("/address", addressRoutes);
 app.get("/", (req, res) => {
